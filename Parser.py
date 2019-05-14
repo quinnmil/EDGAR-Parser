@@ -27,7 +27,7 @@ def getXML(cik):
 
     if table is None: 
         print("No luck with that CIK, sorry!")
-        return
+        return None, 'None' # supports name return. 
 
     # check each row in table for "13F" filing
     filling = None
@@ -42,7 +42,7 @@ def getXML(cik):
 
     if (filling == None):
         print("sorry, no 13F filings found for this CIK")
-        return
+        return None, 'None'
 
     page.close()
 
@@ -64,7 +64,7 @@ def getXML(cik):
     if xmlLink:
         return xmlLink, name
     print ('No xml file found')
-    return
+    return None, 'None'
 
 
 def parseXML(xml, name):
@@ -85,7 +85,7 @@ def parseXML(xml, name):
 
         tsv_writer = csv.writer(out_file, delimiter='\t')
         
-        infoTables = soup.find_all('infoTable')
+        infoTables = soup.find_all("infoTable")
 
         # parses and writes headers 
         headers = []
