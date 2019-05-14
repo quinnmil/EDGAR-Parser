@@ -48,7 +48,7 @@ def getXML(cik):
 
     # Filling Detail page lists versions of the 13F filling. 
     fillingDetail = BASE_URL+filling
-    page = urllib.request.urlopen(fillingDetail);
+    page = urllib.request.urlopen(fillingDetail)
     soup = BeautifulSoup(page,'html.parser')
     
     # Gets the name of fund from this page, used to title output file. 
@@ -59,7 +59,7 @@ def getXML(cik):
     links = soup.find_all('a')
     for link in links: 
         if ("informationtable.xml" in link.text) and (".html" not in link.get('href')):
-            xmlLink = BASE_URL +link.get('href');
+            xmlLink = BASE_URL +link.get('href')
 
     if xmlLink:
         return xmlLink, name
@@ -86,27 +86,21 @@ def parseXML(xml, name):
         tsv_writer = csv.writer(out_file, delimiter='\t')
         
         infoTables = soup.find_all('infoTable')
-        headers = ["Name of Issuer", "Title of Class",\
-            "CUSIP", "Value", "ssh Prnamt", "ssh Prnamt Type",\
-            "Investment Discression", "Voting Authority - Sole",\
-            "Voting Authroity - Shared"]
+
+        # parses and writes headers 
+        headers = []
+        for h in infoTables[0].find_all():
+            headers.append(h.name)
         tsv_writer.writerow(headers)
 
+        # parses and writes row content
         for t in infoTables:
-            # parse data from table
             row = []
-            row.append(t.nameOfIssuer.text)
-            row.append(t.titleOfClass.text)
-            row.append(t.cusip.text)
-            row.append(t.value.text)
-            row.append(t.shrsOrPrnAmt.sshPrnamt.text)
-            row.append(t.shrsOrPrnAmt.sshPrnamtType.text)
-            row.append(t.investmentDiscretion.text)
-            row.append(t.votingAuthority.Sole.text)
-            row.append(t.votingAuthority.Shared.text)
-        
+            child = t.find_all()
+            for t in child:
+                row.append(t.text)
             tsv_writer.writerow(row)
-
+            
     print("Success. Fund holding written to ", fileName)
     return 
         
@@ -114,7 +108,7 @@ def main():
     ''' Get CIK number for user and writes fund holdings to .tsv file
     '''
     print ("Please enter CIK Number: ")
-    cik = input();
+    cik = input()
     if cik:
         xml, name = getXML(cik)
         if xml:
