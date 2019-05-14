@@ -3,44 +3,38 @@
 # Author: Quinn Milionis
 # 5-13-19
 
-
 ## IMPORTS ##
 import urllib.request
-import re
 import csv
 from bs4 import BeautifulSoup
 
 ## GLOBALS ##
 BASE_URL = "https://www.sec.gov"
 
-# fullURL = "https://www.sec.gov/cgi-bin/browse-edgar?CIK=0001166559&Find=Search&owner=exclude&action=getcompany"
-
 
 ## CORE FUNCTIONS ##
 
 def getXML(cik):
-    ''' Takes a cik number and returns a link an 13F filing. 
+    ''' Takes a cik number and returns a link an 13F filing and name of fund. 
     '''
     # Open results page
     url = "https://www.sec.gov/cgi-bin/browse-edgar?CIK=" + cik + "&Find=Search&owner=exclude&action=getcompany"
     page = urllib.request.urlopen(url)
-
     soup = BeautifulSoup(page,'html.parser')
 
     # select result table
     table = soup.find('table', summary="Results")
-    # return xml file to open 
 
     if table is None: 
         print("No luck with that CIK, sorry!")
         return
 
-
+    # check each row in table for "13F" filing
     filling = None
     for row in table.find_all_next("tr"): # rows on page
         cell = row.find_all('td')
         if (cell):
-                # right now, always pulls the first (most recent) filing. 
+                # right now, always pull the first (most recent) 13F filing. 
                 if "13F" in cell[0].text:
                     filling = cell[1].find('a')['href']
                 break
@@ -60,6 +54,7 @@ def getXML(cik):
     # Gets the name of fund from this page, used to title output file. 
     name = soup.find('span', attrs={'class' : 'companyName'}).text[:15]
 
+    # find linkt to xml file. 
     xmlLink = None
     links = soup.find_all('a')
     for link in links: 
@@ -89,12 +84,14 @@ def parseXML(xml, name):
     with open(fileName, 'w') as out_file:
 
         tsv_writer = csv.writer(out_file, delimiter='\t')
+        
         infoTables = soup.find_all('infoTable')
         headers = ["Name of Issuer", "Title of Class",\
             "CUSIP", "Value", "ssh Prnamt", "ssh Prnamt Type",\
             "Investment Discression", "Voting Authority - Sole",\
             "Voting Authroity - Shared"]
         tsv_writer.writerow(headers)
+
         for t in infoTables:
             # parse data from table
             row = []
@@ -110,10 +107,12 @@ def parseXML(xml, name):
         
             tsv_writer.writerow(row)
 
+    print("Success. Fund holding written to ", fileName)
+    return 
         
 def main():
-
-    # get cik number from user
+    ''' Get CIK number for user and writes fund holdings to .tsv file
+    '''
     print ("Please enter CIK Number: ")
     cik = input();
     if cik:
@@ -124,7 +123,6 @@ def main():
     return 
 
 # 0001166559 - BILL & MELINDA GATES FOUNDATION TRUST
-
 
 if __name__ == "__main__":
     main()
